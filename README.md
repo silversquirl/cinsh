@@ -20,3 +20,13 @@ The following configuration options are supported:
 When a task is executed, the contents of its directory is copied into `/cinsh/` on
 the container. Any files specified by a `dep` option in the `conf` file will then
 be copied in on top, possibly replacing existing files.
+
+## Dependencies
+
+By default, cinsh uses [podman] to run tasks in containers. This can be customized in
+the configuration file `/etc/cinsh.conf`.
+
+With the default config, the only dependencies of cinsh are a POSIX-ish `/bin/sh`
+and podman.
+
+[podman]: https://podman.io/
