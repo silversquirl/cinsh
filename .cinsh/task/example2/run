@@ -1,0 +1,4 @@
+#!/bin/sh
+echo example2 task
+ls -A
+cat foobar

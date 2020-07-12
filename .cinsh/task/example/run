@@ -1,0 +1,6 @@
+#!/bin/sh
+echo 'Hello, world!'
+apt moo
+pwd
+ls -A
+echo 'This file was created by the `example` task' >foobar

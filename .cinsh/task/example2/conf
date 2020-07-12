@@ -1,0 +1,2 @@
+container docker://debian:buster
+dep example foobar

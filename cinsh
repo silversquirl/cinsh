@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# Override in config to provide custom podman options
+podman_run() {
+	podman run --ulimit host "$@"
+}
+
+# Override in config to use a different container system
+run_container() {
+	podman_run \
+		--mount type=bind,src="$1",dst=/cinsh,rw \
+		-i -w /cinsh "$2" "$3"
+}
+
+# Config is just a shell script
+[ -e /etc/cinsh.conf ] && . /etc/cinsh.conf
+
+if [ "$#" -eq 0 ]; then
+	echo 'Usage: cinsh TASK_NAME'
+	exit 1
+fi
+
+mkdir -p .cinsh/store || exit
+store="$PWD/.cinsh/store/$$/"
+mkdir "$store" || exit
+
+atexit() {
+	rm -r "$store"
+	rmdir "$(dirname "$store")" 2>/dev/null
+}
+trap atexit EXIT
+
+cinsh_run() {
+	task="$PWD/.cinsh/task/$1"
+
+	[ -d "$store/$1/" ] && return
+	mkdir -p "$store/$1/" || exit
+	(cd "$task"; cp -a . "$store/$1/") || exit
+
+	while read -r opt a b; do
+		case "$opt" in
+			container)
+				container="$a"
+				;;
+
+			dep)
+				(cinsh_run "$a") || exit
+				if [ -n "$b" ]; then
+					cp -a "$store/$a/$b" "$store/$1/" || exit
+				fi
+				;;
+		esac
+	done <"$task/conf"
+
+	if [ -z "$container" ]; then
+		echo "[$1] Error: Container not specified"
+		exit 1
+	fi
+
+	run_container "$store/$1/" "$container" ./run
+}
+
+for t; do
+	cinsh_run "$t"
+done
