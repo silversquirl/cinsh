@@ -20,9 +20,10 @@ if [ "$#" -eq 0 ]; then
 	exit 1
 fi
 
-mkdir -p .cinsh/store || exit
-store="$PWD/.cinsh/store/$$/"
-mkdir "$store" || exit
+mkdir -p .cinsh/store .cinsh/output || exit
+store="$PWD/.cinsh/store/$$"
+out="$PWD/.cinsh/output/$$"
+mkdir "$store" "$out" || exit
 
 atexit() {
 	rm -r "$store"
@@ -49,6 +50,14 @@ cinsh_run() {
 					cp -a "$store/$a/$b" "$store/$1/" || exit
 				fi
 				;;
+
+			out)
+				has_output=y
+				;;
+
+			*)
+				echo "Unrecognized config option '$opt'" >&2
+				;;
 		esac
 	done <"$task/conf"
 
@@ -58,6 +67,18 @@ cinsh_run() {
 	fi
 
 	run_container "$store/$1/" "$container" ./run
+
+	if [ -n "$has_output" ]; then
+		while read -r opt a b; do
+			case "$opt" in
+				out)
+					b="${b:-"$a"}"
+					mkdir -p "$(dirname "$out/$b")"
+					cp -a "$store/$1/$a" "$out/$b" || exit
+					;;
+			esac
+		done <"$task/conf"
+	fi
 }
 
 for t; do

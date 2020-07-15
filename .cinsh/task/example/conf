@@ -1,1 +1,2 @@
 container docker://debian:buster
+out foo
