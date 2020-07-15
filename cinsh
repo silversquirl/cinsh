@@ -20,6 +20,12 @@ if [ "$#" -eq 0 ]; then
 	exit 1
 fi
 
+if command -v tput >/dev/null 2>&1; then
+	bold="$(tput bold)"
+	red="$(tput setaf 1)"
+	reset="$(tput sgr0)"
+fi
+
 mkdir -p .cinsh/store .cinsh/output || exit
 store="$PWD/.cinsh/store/$$"
 out="$PWD/.cinsh/output/$$"
@@ -38,10 +44,19 @@ cinsh_run() {
 	mkdir -p "$store/$1/" || exit
 	(cd "$task"; cp -a . "$store/$1/") || exit
 
-	while read -r opt a b; do
+	meta=
+	container=
+	has_output=
+
+	exec 3<"$task/conf"
+	while read -r opt a b <&3; do
 		case "$opt" in
 			container)
 				container="$a"
+				;;
+
+			meta)
+				meta=y
 				;;
 
 			dep)
@@ -56,17 +71,29 @@ cinsh_run() {
 				;;
 
 			*)
-				echo "Unrecognized config option '$opt'" >&2
+				echo "[$1] Error: Unrecognized config option '$opt'. Ignored" >&2
 				;;
 		esac
-	done <"$task/conf"
+	done
 
-	if [ -z "$container" ]; then
-		echo "[$1] Error: Container not specified"
+	if [ -n "$meta" ] && [ -n "$container" ]; then
+		echo "[$1] Error: meta and container options are mutually exclusive" >&2
 		exit 1
 	fi
 
-	run_container "$store/$1/" "$container" ./run
+	if [ -z "$meta" ]; then
+		if [ -z "$container" ]; then
+			echo "[$1] Error: Container not specified"
+			exit 1
+		fi
+
+		echo "$bold[$1]$reset"
+		if ! run_container "$store/$1/" "$container" ./run; then
+			echo "$bold$red------ TASK $1 FAILED ------$reset"
+			exit 1
+		fi
+		echo
+	fi
 
 	if [ -n "$has_output" ]; then
 		while read -r opt a b; do
