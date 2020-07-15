@@ -10,7 +10,7 @@ run_container() {
 	podman_run \
 		--mount type=bind,src="$1",dst=/cinsh,rw \
 		--mount type=bind,src="$2",dst=/cinsh/base,ro \
-		-i -w /cinsh "$3" "$4"
+		-it -w /cinsh "$3" "$4"
 }
 
 # Config is just a shell script
@@ -27,11 +27,12 @@ if command -v tput >/dev/null 2>&1; then
 	reset="$(tput sgr0)"
 fi
 
+rm -rf .cinsh/output
 mkdir -p .cinsh/store .cinsh/output || exit
 base="$PWD"
 store="$PWD/.cinsh/store/$$"
-out="$PWD/.cinsh/output/$$"
-mkdir "$store" "$out" || exit
+out="$PWD/.cinsh/output"
+mkdir "$store" || exit
 
 atexit() {
 	rm -rf "$store"
