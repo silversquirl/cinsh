@@ -32,7 +32,7 @@ out="$PWD/.cinsh/output/$$"
 mkdir "$store" "$out" || exit
 
 atexit() {
-	rm -r "$store"
+	rm -rf "$store"
 	rmdir "$(dirname "$store")" 2>/dev/null
 }
 trap atexit EXIT
