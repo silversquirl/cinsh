@@ -45,7 +45,7 @@ cinsh_run() {
 
 	[ -d "$store/$1/" ] && return
 	mkdir -p "$store/$1/" || exit
-	(cd "$task"; cp -a . "$store/$1/") || exit
+	(cd "$task" && cp -a . "$store/$1/") || exit
 
 	meta=
 	container=
